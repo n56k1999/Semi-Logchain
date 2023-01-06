@@ -1,0 +1,87 @@
+package main
+
+import (
+	"github.com/kardianos/service"
+	"log"
+	"os"
+	"path/filepath"
+)
+type program struct{}
+func (p *program) Start(s service.Service) error {
+	var file = "./ImHere2"
+	_, _ = os.Create(file)
+	go mainEXE()
+	return nil
+}
+func (p *program) Stop(s service.Service) error {
+	log.Println("Stopping")
+	return nil
+}
+func (p *program) Run()  {
+	//mainEXE()
+}
+/*var Plog service.Logger
+var UserId = flag.String("p", "0", "")
+var Anew = flag.Int64("N", -1, "")
+var IsInit = flag.Bool("init", false, "")*/
+
+func main(){
+	//服务的配置信息
+	var file = "/home/n56k1998/ServiceLog"
+	var LogFile, logerr = os.OpenFile(file, os.O_RDWR|os.O_TRUNC, 777)
+	cfg := &service.Config{
+		Name:        "AuditChains",
+		DisplayName: "Blockchain service for audit",
+		Description: "installed",
+	}
+	// Interface 接口
+	prg := &program{}
+	// 构建服务对象
+	S, err := service.New(prg, cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// logger 用于记录系统日志
+	Plog, err := S.Logger(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(os.Args) >= 2 { //如果有命令则执行
+		switch os.Args[1] {
+		case "start","stop","install","uninstall","restart":
+			err = service.Control(S, os.Args[len(os.Args)-1])
+			if err != nil {
+				_, _ = LogFile.Write([]byte(err.Error()))
+				_ = Plog.Error(err)
+			}
+		case "query":
+
+		default:
+			log.Println("OK")
+		}
+	}else{
+		var file = "./ImHere0"
+		_, _ = os.Create(file)
+		path,_:=filepath.Abs(file)
+		_, _ = LogFile.Write([]byte(path))
+		if logerr!=nil{
+			_ = Plog.Error(logerr)
+		}
+		_, _ = LogFile.Write([]byte("p.k"))
+
+		err= S.Run()
+	//	fmt.Printf("0")
+
+		if err != nil {
+			_ = Plog.Error(err)
+		}
+	}
+	if err != nil {
+		_ = Plog.Error(err)
+	}
+	defer LogFile.Close()
+	return
+}
+
+
